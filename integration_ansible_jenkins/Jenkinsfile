@@ -1,6 +1,9 @@
 pipeline{
     agent {label 'ansible'}
     stages{
+        stage(clonningthe repo){
+            git url: 'https://github.com/kishorebittu3003/documents.git',branch:'integration_ansible_jenkin
+        }
         stage('clonning'){
             steps{
                 sh"""
