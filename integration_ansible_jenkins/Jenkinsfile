@@ -14,7 +14,7 @@ pipeline{
                 sh"""
                     cd integration_ansible_jenkins/ 
                     ansibile -i devhosts -m ping all
-                    ansible-playbook -i devhosts playbook
+                    ansible-playbook -i devhosts playbook.yaml
                   """
             }
         }
