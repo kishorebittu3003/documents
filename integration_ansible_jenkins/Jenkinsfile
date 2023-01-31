@@ -1,13 +1,15 @@
 pipeline{
-    agent {label 'ansible'}
+    agent none
     stages{
         stage('clonningthe repo'){
+            agent {label 'ansible'}
             steps{
             git url: 'https://github.com/kishorebittu3003/documents.git',
                 branch: 'integrationjenkinsansible'
             }
         }
         stage('clonning'){
+            agent {label 'ansible'}
             steps{
                 sh"""
                     cd integration_ansible_jenkins/ 
