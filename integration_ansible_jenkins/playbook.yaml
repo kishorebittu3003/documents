@@ -7,12 +7,13 @@
     java_package: openjdk-11-jdk
     java_path_url: /usr/lib/jvm/java-11-openjdk-amd64 
     tomcat_url: https://dlcdn.apache.org/tomcat/tomcat-10/v10.1.5/bin/apache-tomcat-10.1.5.tar.gz
-    extracted_url: /tmp/apache-tomcat-10.1.5.tar.gz 
+    extracted_url: /tmp/apache-tomcat-10.1.5.tar.gz
     tomcat_user: tomcat
     tomcat_group: tomcat 
     tomcat_directory: /opt/tomcat
     tomcat_new_directory: /opt/tomcat/latest 
     shell: /bin/false
+    java_home: /usr/lib/jvm/java-11-openjdk-amd64
     java_opts: -Djava.security.egd=file:///dev/urandom -Djava.awt.headless=true
   tasks:
     - name: debug
@@ -46,7 +47,7 @@
         create_home: yes
         name: tomcat
         home: "{{ tomcat_directory }}"
-#          group: tomcat
+        group: tomcat
         shell: "{{ shell }}"
     - name: debug
       ansible.builtin.debug:    
@@ -94,7 +95,8 @@
         src: tomcat.service.j2 
         dest: /etc/systemd/system/tomcat.service
         owner: "{{ tomcat_user }}"
-        group: "{{ tomcat_group }}"    
+        group: "{{ tomcat_group }}"
+        remote_src: no    
     - name: debug
       ansible.builtin.debug:
         msg: reloading the daemon 
