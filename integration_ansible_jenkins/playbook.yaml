@@ -46,7 +46,7 @@
         create_home: yes
         name: tomcat
         home: "{{ tomcat_directory }}"
-        group: tomcat
+#          group: tomcat
         shell: "{{ shell }}"
     - name: debug
       ansible.builtin.debug:    
