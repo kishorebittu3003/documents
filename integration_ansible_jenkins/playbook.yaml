@@ -1,0 +1,191 @@
+---
+- name: installing tomcat
+  become: true 
+  gather_facts: false  
+  hosts: all
+  vars:
+    java_package: openjdk-11-jdk
+    java_path_url: /usr/lib/jvm/java-11-openjdk-amd64 
+    tomcat_url: https://dlcdn.apache.org/tomcat/tomcat-10/v10.1.5/bin/apache-tomcat-10.1.5.tar.gz
+    extracted_url: /tmp/apache-tomcat-10.1.5.tar.gz 
+    tomcat_user: tomcat
+    tomcat_group: tomcat 
+    tomcat_directory: /opt/tomcat
+    tomcat_new_directory: /opt/tomcat/latest 
+    shell: /bin/false
+    java_opts: -Djava.security.egd=file:///dev/urandom -Djava.awt.headless=true
+  tasks:
+    - name: debug
+      ansible.builtin.debug:
+        msg: java package "{{ java_package }}"
+      tags:
+        - debug the packages   
+    - name: installing java
+      ansible.builtin.apt:
+        name: "{{ java_package }}"
+        update_cache: yes
+        state: present
+      tags: 
+        - updating packages for java   
+    - name: debug
+      ansible.builtin.debug:
+        msg: about tomcat file 
+      tags:
+        - creating a folder for tomcat home directory      
+    - name: creating a directory
+      ansible.builtin.file:
+        path: "{{ tomcat_directory }}"
+        state: directory 
+    - name: debug
+      ansible.builtin.debug:
+        msg: creating home for /opt/tomcat 
+      tags:
+        - creating home directory          
+    - name: adding user to /opt/tomcat
+      ansible.builtin.user:
+        create_home: yes
+        name: tomcat
+        home: "{{ tomcat_directory }}"
+        group: tomcat
+        shell: "{{ shell }}"
+    - name: debug
+      ansible.builtin.debug:    
+        msg: about taking tar file of java  
+      tags:
+        - getting tomcat url from website    
+    - name: copying tomcat tar tar_file
+      ansible.builtin.get_url:
+        url: "{{ tomcat_url }}"
+        dest: /tmp/apache-tomcat-10.1.5.tar.gz 
+      notify:
+        - extract_tar_file 
+    - name: debug
+      ansible.builtin.debug:
+        msg: creating a soft link for 
+      tags:
+      - creating a soft link for /opt/tomcat/apache-tomcat-10.1.5     
+    - name: Create a symbolic link /opt/tomcat/apache-tomcat-10.1.5
+      ansible.builtin.file:
+        src: /opt/tomcat/apache-tomcat-10.1.5
+        dest: "{{ tomcat_new_directory }}"
+        owner: "{{ tomcat_user }}" 
+        group: "{{ tomcat_group }}"
+        state: link   
+      notify:
+        - Recursively change ownership of a directory
+    - name: debug module
+      ansible.builtin.debug: 
+        msg: pushing all scripts to be executable
+      tags:
+        - giving all permissions to shell files  
+    - name: Copy each file over that matches the given pattern
+      ansible.builtin.copy:
+        src: "{{ item }}"
+        mode: "+x"
+      with_fileglob: 
+        - "{{ tomcat_new_directory }}/bin/*.sh"
+    - name: debug
+      ansible.builtin.debug:
+        msg: copying a service file to /etc/systemd/system/tomcat.service 
+      tags:
+        - copying the service file from ansible master      
+    - name: copying file 
+      ansible.builtin.template:
+        src: tomcat.service.j2 
+        dest: /etc/systemd/system/tomcat.service
+        owner: "{{ tomcat_user }}"
+        group: "{{ tomcat_group }}"    
+    - name: debug
+      ansible.builtin.debug:
+        msg: reloading the daemon 
+      tags:
+        - reloading the daemon      
+    - name: daemon reload
+      ansible.builtin.systemd:
+         name: tomcat.service 
+         daemon_reload: yes
+         enabled: yes
+         state: started                
+      notify:
+        - copying_file_1
+        - copying_file_2
+        - copying_file_3 
+    - name: Correct java version selected
+      community.general.alternatives:
+        name: java
+        path: "{{ java_path_url }}"
+      tags: 
+        - checking the java path is correct or not   
+    # - name: debug
+    #   ansible.builtin.debug:
+    #     msg: copying the service file     
+    # - name: copying file 
+    #   ansible.builtin.copy:
+    #     src: tomcat.service
+    #     dest: /etc/systemd/system/tomcat.service
+    #     owner: "{{ tomcat_user }}"
+    #     group: "{{ tomcat_group }}"
+    #     remote_src: yes 
+    - name: daemon reload
+      ansible.builtin.systemd:
+         state: started
+         daemon_reload: yes
+         enabled: yes
+         name: tomcat  
+  handlers:
+     - name: debug
+       ansible.builtin.debug:
+         msg: extracting the tar file 
+       tags:
+         - taking the extracted tar file   
+     - name: extract_tar_file
+       ansible.builtin.unarchive:
+         src: "{{ extracted_url }}"
+         dest: /opt/tomcat/
+         remote_src: yes 
+     - name: debug
+       ansible.builtin.debug:
+         msg: changing the ownership of the file 
+       tags:
+         - giving recursive permissions to the "{{ tomcat_new_directory }}"      
+     - name: Recursively change ownership of a directory
+       ansible.builtin.file:
+         path: "{{ tomcat_new_directory }}"
+         state: directory
+         recurse: yes
+         owner: "{{ tomcat_user }}"
+         group: "{{ tomcat_group }}"
+     - name: debug
+       ansible.builtin.debug:
+         msg: copying the file of users.xml 
+       tags:
+         - taking the users.xml file         
+     - name: copying_file_1
+       ansible.builtin.copy:
+         src: tomcatusers.xml 
+         dest: "{{ tomcat_new_directory }}/conf/tomcat-users.xml"
+         owner: "{{ tomcat_user }}"
+         group: "{{ tomcat_group }}" 
+     - name: debug
+       ansible.builtin.debug:
+         msg: copying the file of host-manager 
+       tags: 
+         - taking the hostmanager file    
+     - name: copying_file_2
+       ansible.builtin.copy:
+         src: host-manager-context.xml
+         dest: "{{ tomcat_new_directory }}/webapps/manager/META-INF/context.xml"
+         owner: "{{ tomcat_user }}"
+         group: "{{ tomcat_group }}"
+        # remote_src: yes 
+     - name: debug
+       ansible.builtin.debug:
+         msg: copying the file of new hostmanager  
+       tags:
+         - taking the new hostmanager file    
+     - name: copying_file_3
+       ansible.builtin.copy:
+         src: new-host-manager-context.xml
+         dest: "{{ tomcat_new_directory }}/webapps/host-manager/META-INF/context.xml"
+         owner: "{{ tomcat_user }}"
+         group: "{{ tomcat_group }}"

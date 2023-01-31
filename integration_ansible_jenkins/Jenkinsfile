@@ -1,0 +1,15 @@
+pipeline{
+    agent {label 'ansible'}
+    stages{
+        stage('clonning'){
+            steps{
+                sh"""
+                    cd integration_ansible_jenkins
+                    ansible-playbook -i hosts playbook.yaml
+
+                  """
+            }
+        }
+
+    }
+}
