@@ -4,12 +4,11 @@ pipeline{
         stage('clonning'){
             steps{
                 sh"""
-                    cd integration_ansible_jenkins
-                    ansible-playbook -i hosts playbook.yaml
-
+                    cd integration_ansible_jenkins/ 
+                    ansibile -i devhosts -m ping all
+                    ansible-playbook -i devhosts playbook
                   """
             }
         }
-
     }
 }
